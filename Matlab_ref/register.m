@@ -102,6 +102,7 @@ for iter=1:opt.niter
     end
     
     if opt.do_avi; aviobj = addframe(aviobj,getframe(gcf)); end;
+    saveToBin(Mp, ['C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\register_results\\matlab_results\\Mpm_' num2str(iter) '.bin']);
 end
 
 

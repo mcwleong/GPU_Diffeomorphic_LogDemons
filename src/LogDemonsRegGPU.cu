@@ -51,7 +51,7 @@ cudaTextureObject_t LogDemonsRegGPU::initGaussValue(float* &h_gaussianVal, float
 	h_gaussianVal = new float[radius + 1];
 	float sum = 0;
 	for (int i = 0; i < radius + 1; ++i){
-		h_gaussianVal[i] = exp(-(i*i) / (2 * sigma));
+		h_gaussianVal[i] = exp(-(i*i) / (2 * sigma* sigma));
 		i == 0 ? sum += h_gaussianVal[i] / 2.0 : sum += h_gaussianVal[i];
 	}
 	for (int i = 0; i < radius + 1; ++i){
@@ -112,7 +112,8 @@ cudaTextureObject_t LogDemonsRegGPU::CreateTextureObject(float* d_I, cudaArray *
 	cudaTextureDesc     texDescr;
 	memset(&texDescr, 0, sizeof(cudaTextureDesc));
 	texDescr.normalizedCoords = false;
-	texDescr.filterMode = cudaFilterModePoint;
+	texDescr.filterMode = cudaFilterModeLinear;
+	//texDescr.filterMode = cudaFilterModePoint;
 	texDescr.addressMode[0] = cudaAddressModeClamp;
 	texDescr.addressMode[1] = cudaAddressModeClamp;
 	texDescr.addressMode[2] = cudaAddressModeClamp;
@@ -120,6 +121,20 @@ cudaTextureObject_t LogDemonsRegGPU::CreateTextureObject(float* d_I, cudaArray *
 	cudaTextureObject_t texObj;
 	cudaCreateTextureObject(&texObj, &texRes, &texDescr, NULL);
 	return texObj;
+}
+
+// Sync GPU memory back to RAM
+void LogDemonsRegGPU::syncGPUMemory(){
+	cudaMemcpy(deformedMoving, d_deformedMoving, sizeof(float)*len, cudaMemcpyDeviceToHost);
+	cudaMemcpy(ux, d_ux, sizeof(float)*len, cudaMemcpyDeviceToHost);
+	cudaMemcpy(uy, d_uy, sizeof(float)*len, cudaMemcpyDeviceToHost);
+	cudaMemcpy(uz, d_uz, sizeof(float)*len, cudaMemcpyDeviceToHost);
+	cudaMemcpy(vx, d_vx, sizeof(float)*len, cudaMemcpyDeviceToHost);
+	cudaMemcpy(vy, d_vy, sizeof(float)*len, cudaMemcpyDeviceToHost);
+	cudaMemcpy(vz, d_vz, sizeof(float)*len, cudaMemcpyDeviceToHost);
+	cudaMemcpy(sx, d_sx, sizeof(float)*len, cudaMemcpyDeviceToHost);
+	cudaMemcpy(sy, d_sy, sizeof(float)*len, cudaMemcpyDeviceToHost);
+	cudaMemcpy(sz, d_sz, sizeof(float)*len, cudaMemcpyDeviceToHost);
 }
 
 
@@ -131,7 +146,6 @@ void LogDemonsRegGPU::initialize(){
 	// Initialize GPU memory for images
 	cudaMalloc((void**)&d_fixed, sizeof(float)*len);
 	cudaMemcpy(d_fixed, fixed, sizeof(float)*len, cudaMemcpyHostToDevice);
-
 	cudaMalloc((void**)&d_moving, sizeof(float)*len);
 	cudaMemcpy(d_moving, moving, sizeof(float)*len, cudaMemcpyHostToDevice);
 	cudaMalloc((void**)&d_deformedMoving, sizeof(float)*len);
@@ -160,14 +174,26 @@ void LogDemonsRegGPU::initialize(){
 	getCudaError("GPU Vector field Memory initialization");
 
 	// Initialize GPU memory for temp memory
+	cudaMalloc((void**)&d_normg2, sizeof(float)*len);
+	cudaMemset(d_normg2, 0, sizeof(float)*len);
 	cudaMalloc((void**)&d_uxf, sizeof(float)*len);
 	cudaMemset(d_uxf, 0, sizeof(float)*len);
 	cudaMalloc((void**)&d_uyf, sizeof(float)*len);
 	cudaMemset(d_uyf, 0, sizeof(float)*len);
 	cudaMalloc((void**)&d_uzf, sizeof(float)*len);
 	cudaMemset(d_uzf, 0, sizeof(float)*len);
+	cudaMalloc((void**)&d_tsx, sizeof(float)*len);
+	cudaMemset(d_uxf, 0, sizeof(float)*len);
+	cudaMalloc((void**)&d_tsy, sizeof(float)*len);
+	cudaMemset(d_uyf, 0, sizeof(float)*len);
+	cudaMalloc((void**)&d_tsz, sizeof(float)*len);
+	cudaMemset(d_uzf, 0, sizeof(float)*len);
+	cudaMalloc((void**)&d_jac2, sizeof(float)*len);
+	cudaMemset(d_jac2, 0, sizeof(float)*len);
+
 	cudaMalloc((void**)&d_en, sizeof(float)*len);
 	cudaMemset(d_en, 0, sizeof(float)*len);
+
 
 	// Initialize GPU 3D Array memory
 	cudaChannelFormatDesc channelDescfloat = cudaCreateChannelDesc<float>();
@@ -190,52 +216,47 @@ void LogDemonsRegGPU::initialize(){
 }
 
 void LogDemonsRegGPU::Register(){
+
 	LogDemonsRegGPU::initialize();
 
 	for (int iter = 0; iter < opt.iteration_max; ++iter) {
+		float v2max;
 
 		/*	Given the current transformation s, compute a correspondence update field u
 		by mimimizing E(u) w.r.t. u		*/
 		findupdate();
-		cout << "findupdate" << endl;
 
 		/*	For a fluid-like regularization let u <- K(sigma_f) * u	*/
-		this->imgaussian(d_ux, d_uy, d_uz, tex_gauss_f, radius_f);
-		cout << "imgaussian 0 " << endl;
+		imgaussian(d_ux, d_uy, d_uz, tex_gauss_f, radius_f);
 
 		/*	Let v <- v compose u	*/
 		compose();
-		cout << "compose " << endl;
 
 		/*	For a diffusion like regularization let s <- K(sigma_d)*c (else, s<-c)	*/
 		imgaussian(d_vx, d_vy, d_vz, tex_gauss_d, radius_d);
-		cout << "imgaussian 1 " << endl;
-
+			
 		/*	s = exp(v)	*/
 		expfield();
-		cout << "expfield " << endl;
 
 		//Transform the moving image
 		iminterpolate();
-		cout << "iminterpolate " << endl;
+
 		//evulate energy
 		energy_vec.push_back(energy());
-		cout << "energy " << endl;
 		printf("Iteration %i - Energy: %f\n", iter + 1, energy_vec.back());
 
-		if (iter > 4){
-			if ((energy_vec[iter - 5] - energy_vec[iter]) < (energy_vec[0] * opt.stop_criterium)){
-				printf("e-5: %f\n", energy_vec[iter - 5]);
-				printf("e: %f\n", energy_vec[iter]);
-				printf("e-5 - e: %f\n", energy_vec[iter - 5] - energy_vec[iter]);
-				printf("e[0] * opt.stop_criterium: %f\n", energy_vec[0] * opt.stop_criterium);
-				//break;
-			}
-		}
-		std::string filename = "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\register_results\\gpu_results\\Mp_" + to_string(iter + 1) + std::string(".bin");
-		saveImage<float>(deformedMoving, dim, filename.c_str());
-	}
+		//if (iter > 4){
+		//	if ((energy_vec[iter - 5] - energy_vec[iter]) < (energy_vec[0] * opt.stop_criterium)){
+		//		printf("e-5: %f\n", energy_vec[iter - 5]);
+		//		printf("e: %f\n", energy_vec[iter]);
+		//		printf("e-5 - e: %f\n", energy_vec[iter - 5] - energy_vec[iter]);
+		//		printf("e[0] * opt.stop_criterium: %f\n", energy_vec[0] * opt.stop_criterium);
+		//		break;
+		//	}
+		//}
 
+	}
+	syncGPUMemory();
 	printf("LogDemonsRegGPU Complete\n");	printf("\n"); printf("\n");
 	for (int iter = 0; iter < energy_vec.size(); ++iter){
 		printf("Iteration %i - Energy: %f\n", iter + 1, energy_vec[iter]);
@@ -243,21 +264,69 @@ void LogDemonsRegGPU::Register(){
 }
 
 void LogDemonsRegGPU::gradient(float* d_I, float* d_fx, float* d_fy, float* d_fz){
-	dim3 blocksize = dim3(8, 8, 8);
-	dim3 gridsize = dim3(ceil(double(dim[0]) / double(blocksize.x)), ceil(double(dim[1]) / double(blocksize.y)), ceil(double(dim[2]) / double(blocksize.z)));
+
+	dim3 blocksize;
+	dim3 gridsize;
+	int shsize;
+
+	// X-direction
+	blocksize = dim3(dim[0], 1, 1);
+	gridsize = dim3(dim[1], dim[2], 1);
+	
+	shsize = sizeof(float)*(blocksize.x + 2);
 
 	if (debug){
-		cout << "Gradient decomposing image..." << endl;
+		cout << "gradient decomposition ... X direction" << endl;
+		cout << "blocksize: " << blocksize.x << " " << blocksize.y << " " << blocksize.z << " " << endl;
+		cout << "gridsize: " << gridsize.x << " " << gridsize.y << " " << gridsize.z << " " << endl;
+		cout << "shsize: " << shsize << endl;
+	}
+
+	gradientKernel KERNEL_ARGS3(gridsize, blocksize, shsize) (d_I, d_fx, 0, d3_dim);
+	getCudaError("gradientKernel - X");
+	if (debug){
+		cudaDeviceSynchronize();
+		getCudaError("DeviceSynchorize gradient X");
+	}
+
+	// Y-direction
+	blocksize = dim3{ 32, 32, 1 };
+	gridsize = dim3{ (unsigned int)ceil(dim[0] / 32.0), dim[2], 1 };
+	shsize = 32 * (dim[1]+2) * sizeof(float);
+
+
+	if (debug){
+		cout << "gradient decomposition ... Y direction" << endl;
+		cout << "blocksize: " << blocksize.x << " " << blocksize.y << " " << blocksize.z << " " << endl;
+		cout << "gridsize: " << gridsize.x << " " << gridsize.y << " " << gridsize.z << " " << endl;
+		cout << "shsize: " << shsize << endl;
+	}
+
+	gradientKernel  KERNEL_ARGS3(gridsize, blocksize, shsize) (d_I, d_fy, 1, d3_dim);
+	getCudaError("gradientKernel - Y");
+	if (debug){
+		cudaDeviceSynchronize();
+		getCudaError("DeviceSynchorize gradient Y");
+	}
+
+	// Z-direction
+	blocksize = dim3{ 32, 32, 1 };
+	gridsize = dim3{ (unsigned int)ceil(dim[0] / 32.0), dim[1], 1 };
+	shsize = 32 * (dim[2] + 2) * sizeof(float);
+
+	if (debug){
+		cout << "gradient decomposition ... Z direction" << endl;
 		cout << "blocksize: " << blocksize.x << " " << blocksize.y << " " << blocksize.z << " " << endl;
 		cout << "gridsize: " << gridsize.x << " " << gridsize.y << " " << gridsize.z << " " << endl;
 	}
 
-	gradientKernel KERNEL_ARGS2(gridsize, blocksize) (d_I, d_fx, d_fy, d_fz, d3_dim);
-	getCudaError("gradientKernel");
-	if (debug) {
+	gradientKernel  KERNEL_ARGS3(gridsize, blocksize, shsize) (d_I, d_fz, 2, d3_dim);
+	getCudaError("gradientKernel - Z");
+	if (debug){
 		cudaDeviceSynchronize();
-		getCudaError("DeviceSynchorize gradientKernel");
+		getCudaError("DeviceSynchorize gradient Z");
 	}
+
 }
 
 float LogDemonsRegGPU::thrustFindMaxElement(float* d_f){
@@ -276,18 +345,14 @@ void LogDemonsRegGPU::findupdate(){
 	dim3 gridsize = dim3(ceil(float(len) / float(blocksize.x)), 1, 1);
 
 	if (debug){
-		cout << "Computing update kernel..." << endl;
+		cout << "Update Veector  kernel..." << endl;
 		cout << "blocksize: " << blocksize.x << " " << blocksize.y << " " << blocksize.z << " " << endl;
 		cout << "gridsize: " << gridsize.x << " " << gridsize.y << " " << gridsize.z << " " << endl;
 	}
-	normalizeVectorKernel KERNEL_ARGS2(gridsize, blocksize) (d_ux, d_uy, d_uz, d_normg2, len);
-	getCudaError("normalizeVectorKernel");
-	if (debug) {
-		cudaDeviceSynchronize();
-		getCudaError("DeviceSynchorize normalizeVectorKernel");
-	}
+	
 
-	updateKernel KERNEL_ARGS2(gridsize, blocksize) (d_fixed, d_deformedMoving, d_ux, d_uy, d_uz, d_uxf, d_uyf, d_uzf, alpha2, d3_dim);
+	updateKernel KERNEL_ARGS2(gridsize, blocksize) (d_fixed, d_deformedMoving, d_ux, d_uy, d_uz, d_uxf, d_uyf, d_uzf, alpha2, len);
+	cudaDeviceSynchronize();
 
 	getCudaError("updateKernel");
 	if (debug) {
@@ -298,8 +363,6 @@ void LogDemonsRegGPU::findupdate(){
 
 void LogDemonsRegGPU::imgaussian(float* d_fx, float* d_fy, float* d_fz, cudaTextureObject_t tex, int radius){
 	
-	if (maxdim(marginSize) < radius) printf("Warning: Margin size (%u) is smaller than the gaussian radius (%i). Increase the padding factor. \n", maxdim(marginSize), radius);
-		
 	//X-direction
 	dim3 blocksize;
 	dim3 gridsize;
@@ -307,7 +370,7 @@ void LogDemonsRegGPU::imgaussian(float* d_fx, float* d_fy, float* d_fz, cudaText
 	
 	blocksize=dim3(dim[0], 1, 1);
 	gridsize= dim3(dim[1], dim[2],1);
-	shsize = sizeof(float4)*(blocksize.x + radius * 2);
+	shsize = sizeof(float)*(blocksize.x + radius * 2);
 
 	if (debug){
 		cout << "Gaussian blur... X direction" << endl;
@@ -323,10 +386,11 @@ void LogDemonsRegGPU::imgaussian(float* d_fx, float* d_fy, float* d_fz, cudaText
 		cudaDeviceSynchronize();
 		getCudaError("DeviceSynchorize Gaussian X");
 	}
+
 	//Y-direciton
 	blocksize = dim3{ 32, 32, 1 };
 	gridsize = dim3{ (unsigned int)ceil(dim[0] / 32.0), dim[2], 1 };
-	shsize = 32 * dim[1] * sizeof(float);
+	shsize = 32 * (dim[1]+radius*2) * sizeof(float);
 
 	if (debug){
 		cout << "Gaussian blur... Y direction" << endl;
@@ -345,7 +409,7 @@ void LogDemonsRegGPU::imgaussian(float* d_fx, float* d_fy, float* d_fz, cudaText
 	//Z-direciton
 	blocksize = dim3{ 32, 32, 1 };
 	gridsize = dim3{ (unsigned int)ceil(dim[0] / 32.0), dim[1], 1 };
-	shsize = 32 * dim[2] * sizeof(float);
+	shsize = 32 * (dim[2]+radius*2) * sizeof(float);
 
 	if (debug){
 		cout << "Gaussian blur... Z direction" << endl;
@@ -372,12 +436,12 @@ void LogDemonsRegGPU::compose(){
 	coordinateImageKernel KERNEL_ARGS2(gridsize, blocksize) (d_ux, d_uy, d_uz, d3_dim, addCoordinate);
 
 	tex_vx = CreateTextureObject(d_vx, d_cuArr_vx);
-	tex_vy = CreateTextureObject(d_vy, d_cuArr_vx);
-	tex_vz = CreateTextureObject(d_vz, d_cuArr_vx);
+	tex_vy = CreateTextureObject(d_vy, d_cuArr_vy);
+	tex_vz = CreateTextureObject(d_vz, d_cuArr_vz);
 
-	interpolate(tex_vx, ux, uy, uz, vx);
-	interpolate(tex_vy, ux, uy, uz, vy);
-	interpolate(tex_vz, ux, uy, uz, vz);
+	interpolate(tex_vx, d_ux, d_uy, d_uz, d_vx);
+	interpolate(tex_vy, d_ux, d_uy, d_uz, d_vy);
+	interpolate(tex_vz, d_ux, d_uy, d_uz, d_vz);
 
 	coordinateImageKernel KERNEL_ARGS2(gridsize, blocksize) (d_vx, d_vy, d_vz, d3_dim, substractCoordinate);
 
@@ -399,16 +463,16 @@ void LogDemonsRegGPU::self_compose(){
 	coordinateImageKernel KERNEL_ARGS2(gridsize, blocksize) (d_sx, d_sy, d_sz, d3_dim, addCoordinate);
 
 	tex_vx = CreateTextureObject(d_sx, d_cuArr_vx);
-	tex_vy = CreateTextureObject(d_sy, d_cuArr_vx);
-	tex_vz = CreateTextureObject(d_sz, d_cuArr_vx);
+	tex_vy = CreateTextureObject(d_sy, d_cuArr_vy);
+	tex_vz = CreateTextureObject(d_sz, d_cuArr_vz);
 
-	interpolate(tex_vx, sx, sy, sz, vx);
-	interpolate(tex_vy, sx, sy, sz, vy);
-	interpolate(tex_vz, sx, sy, sz, vz);
+	interpolate(tex_vx, d_sx, d_sy, d_sz, d_tsx);
+	interpolate(tex_vy, d_sx, d_sy, d_sz, d_tsy);
+	interpolate(tex_vz, d_sx, d_sy, d_sz, d_tsz);
 
-	cudaMemcpy(sx, vx, sizeof(float)*len, cudaMemcpyDeviceToDevice);
-	cudaMemcpy(sy, vy, sizeof(float)*len, cudaMemcpyDeviceToDevice);
-	cudaMemcpy(sz, vz, sizeof(float)*len, cudaMemcpyDeviceToDevice);
+	cudaMemcpy(d_sx, d_tsx, sizeof(float)*len, cudaMemcpyDeviceToDevice);
+	cudaMemcpy(d_sy, d_tsy, sizeof(float)*len, cudaMemcpyDeviceToDevice);
+	cudaMemcpy(d_sz, d_tsz, sizeof(float)*len, cudaMemcpyDeviceToDevice);
 
 	coordinateImageKernel KERNEL_ARGS2(gridsize, blocksize) (d_sx, d_sy, d_sz, d3_dim, substractCoordinate);
 
@@ -428,7 +492,10 @@ void LogDemonsRegGPU::iminterpolate(){
 	gridsize = dim3(dim[1], dim[2], 1);
 	coordinateImageKernel KERNEL_ARGS2(gridsize, blocksize) (d_sx, d_sy, d_sz, d3_dim, addCoordinate);
 
-	interpolate(tex_mov, sx, sy, sz, deformedMoving);
+	getCudaError("coordinateImageKernel");
+	cudaDeviceSynchronize();
+	getCudaError("DeviceSynchorize coordinateImageKernel");
+	interpolate(tex_mov, d_sx, d_sy, d_sz, d_deformedMoving);
 }
 
 void LogDemonsRegGPU::interpolate(cudaTextureObject_t tex_I, float* d_sx, float* d_sy, float* d_sz, float* d_Ip){
@@ -449,17 +516,16 @@ void LogDemonsRegGPU::interpolate(cudaTextureObject_t tex_I, float* d_sx, float*
 }
 
 
-
-void LogDemonsRegGPU::expfield(){
+float LogDemonsRegGPU::findLargestNormVector(float* d_fx, float* d_fy, float* d_fz){
 	dim3 blocksize = dim3(1024, 1, 1);
 	dim3 gridsize = dim3(ceil(float(len) / float(blocksize.x)), 1, 1);
 
 	if (debug){
-		cout << "Computing update kernel..." << endl;
+		cout << "Computing normalized kernel..." << endl;
 		cout << "blocksize: " << blocksize.x << " " << blocksize.y << " " << blocksize.z << " " << endl;
 		cout << "gridsize: " << gridsize.x << " " << gridsize.y << " " << gridsize.z << " " << endl;
 	}
-	normalizeVectorKernel KERNEL_ARGS2(gridsize, blocksize) (d_vx, d_vy, d_vz, d_normg2, len);
+	normalizeVectorKernel KERNEL_ARGS2(gridsize, blocksize) (d_fx, d_fy, d_fz, d_normg2, len);
 	getCudaError("normalizeVectorKernel");
 	if (debug) {
 		cudaDeviceSynchronize();
@@ -467,6 +533,18 @@ void LogDemonsRegGPU::expfield(){
 	}
 
 	float v2max = thrustFindMaxElement(d_normg2);
+	cout << "largest normalized vector sqaured: " << v2max << endl;
+	return v2max;
+	
+}
+
+
+void LogDemonsRegGPU::expfield(){
+	dim3 blocksize = dim3(1024, 1, 1);
+	dim3 gridsize = dim3(ceil(float(len) / float(blocksize.x)), 1, 1);
+
+	float v2max = findLargestNormVector(d_vx, d_vy, d_vz);
+	v2max = sqrt(v2max);
 	int N = 0; 
 	while (v2max > 0.5f){
 		N++;
@@ -492,25 +570,44 @@ void LogDemonsRegGPU::expfield(){
 
 float LogDemonsRegGPU::energy(){
 
+	dim3 blocksize = dim3(1024, 1, 1);
+	dim3 gridsize = dim3(ceil(float(len) / float(blocksize.x)), 1, 1);
 	float reg_weight = (opt.sigma_i*opt.sigma_i) / (opt.sigma_x*opt.sigma_x);
-	//pixel-wise energy
-	dim3 blocksize = dim3(8, 8, 8);
-	dim3 gridsize = dim3(ceil(double(dim[0]) / double(blocksize.x)), ceil(double(dim[1]) / double(blocksize.y)), ceil(double(dim[2]) / double(blocksize.z)));
 
+	//jacobian();
+	
 	if (debug){
 		cout << "Computing energy..." << endl;
 		cout << "blocksize: " << blocksize.x << " " << blocksize.y << " " << blocksize.z << " " << endl;
 		cout << "gridsize: " << gridsize.x << " " << gridsize.y << " " << gridsize.z << " " << endl;
 	}
-	energyKernel KERNEL_ARGS2(gridsize, blocksize) (d_fixed, d_deformedMoving, d_sx, d_sy, d_sz, d_en, reg_weight, d3_dim);
+	energyKernel KERNEL_ARGS2(gridsize, blocksize) (d_fixed, d_deformedMoving, d_jac2, d_en, reg_weight, len);
+
+	getCudaError("energyKernel");
+	cudaDeviceSynchronize();
+	getCudaError("DeviceSynchorize energyKernel");
+		
+	// thrust kicks in
+	thrust::device_vector<float> devVec(d_en, d_en + len);
+	float sum = thrust::reduce(devVec.begin(), devVec.end())/len;
+
+	return sum;
+}
+
+void LogDemonsRegGPU::jacobian(){
+
+	dim3 blocksize = dim3(8, 8, 8);
+	dim3 gridsize = dim3(ceil(double(dim[0]) / double(blocksize.x)), ceil(double(dim[1]) / double(blocksize.y)), ceil(double(dim[2]) / double(blocksize.z)));
+
+	if (debug){
+		cout << "Computing jacobian..." << endl;
+		cout << "blocksize: " << blocksize.x << " " << blocksize.y << " " << blocksize.z << " " << endl;
+		cout << "gridsize: " << gridsize.x << " " << gridsize.y << " " << gridsize.z << " " << endl;
+	}
+	jacobianKernel KERNEL_ARGS2(gridsize, blocksize) (d_sx, d_sy, d_sz, d_jac2, d3_dim);
 
 	getCudaError("energyKernel");
 	cudaDeviceSynchronize();
 	getCudaError("DeviceSynchorize energyKernel");
 
-	// thrust kicks in
-	thrust::device_vector<float> devVec(d_en, d_en + len);
-	float sum = thrust::reduce(devVec.begin(), devVec.end());
-
-	return sum;
 }

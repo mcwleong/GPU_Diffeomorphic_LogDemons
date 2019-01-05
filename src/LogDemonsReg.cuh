@@ -22,9 +22,9 @@ public:
 	~LogDemonsReg();
 
 	// Public functions
-	virtual void Register();
+	void Register();
 	void setImages(float* fixed, float* moving, unsigned int ImgSize[3]);
-
+	void debugOn(bool a) { debug = a; }
 
 protected:
 	// Initialization code is set protected as the CUDA version
@@ -78,22 +78,22 @@ protected:
 
 	void padImage();
 
-	virtual void findupdate();
-	virtual void gradient(float *I, float* gx, float* gy, float* gz, float* norm);
-	virtual void gradient(float *I, float *gx, float *gy, float *gz);
+	void findupdate();
+	void gradient(float *I, float* gx, float* gy, float* gz, float* norm);
+	void gradient(float *I, float *gx, float *gy, float *gz);
 
-	virtual void compose();
-	virtual void self_compose();
-	virtual void interp3(float* const ux, float* const uy, float* const uz,
+	void compose();
+	void self_compose();
+	void interp3(float* const ux, float* const uy, float* const uz,
 		const float qx, const float qy, const float qz,
 		float* const uxp, float* const uyp, float* const uzp);
-	virtual void interp3(float* const I, const float qx, const float qy,
+	void interp3(float* const I, const float qx, const float qy,
 		const float qz, float* const Ip);
-	virtual void iminterpolate(float* I, float* sx, float* sy, float* sz, float* Ip);
-	virtual void expfield();
+	void iminterpolate(float* I, float* sx, float* sy, float* sz, float* Ip);
+	void expfield();
 
-	virtual void imgaussian(float* fx, float* fy, float* fz, float sigma);
-	virtual float energy();
-	virtual void jacobian(float* det_J);
+	void imgaussian(float* fx, float* fy, float* fz, float sigma);
+	float energy();
+	void jacobian(float* det_J);
 
 };

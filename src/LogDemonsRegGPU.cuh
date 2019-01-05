@@ -36,7 +36,6 @@ public:
 	void initialize();
 	void Register();
 	
-private:
 	int deviceID = 0;
 
 	cudaTextureObject_t initGaussValue(float* &h_gaussianVal, float* &d_gaussVal, float sigma, int &radius);
@@ -45,16 +44,19 @@ private:
 	inline int maxdim(unsigned int dim[3]){
 		return dim[0] > dim[1] ? (dim[0] > dim[2] ? dim[0] : dim[2]) : (dim[1] > dim[2] ? dim[1] : dim[2]);
 	}
+	void syncGPUMemory();
 
 	// Log demons function
 	void findupdate();
 	void imgaussian(float* d_fx, float* d_fy, float* d_fz, cudaTextureObject_t tex, int radius);
 	void compose();
 	void self_compose();
+	float findLargestNormVector(float* d_fx, float* d_fy, float* d_fz);
 	void expfield();
 	void iminterpolate();
 	void interpolate(cudaTextureObject_t tex_I, float* d_sx, float* d_sy, float* d_sz, float* Ip);
 	float energy();
+	void jacobian();
 
 	void gradient(float* d_I, float* d_fxg, float* d_fyg, float* d_fzg);
 	float thrustFindMaxElement(float* d_f);
@@ -62,8 +64,8 @@ private:
 	// device memory pointers
 	float *d_fixed = 0, *d_moving = 0, *d_deformedMoving = 0;
 	float *d_ux = 0, *d_uy = 0, *d_uz = 0, *d_vx = 0, *d_vy = 0, *d_vz = 0, *d_sx = 0, *d_sy = 0, *d_sz = 0, *d_normg2 = 0, *d_det_J = 0;
-	float *d_uxf = 0, *d_uyf = 0, *d_uzf = 0;
-	float *d_en;
+	float *d_uxf = 0, *d_uyf = 0, *d_uzf = 0, *d_tsx = 0, *d_tsy = 0, *d_tsz = 0;;
+	float *d_en, *d_jac2;
 	int radius_f, radius_d;
 	float* gaussian_f = 0, *gaussian_d = 0;
 	float *d_gaussian_f = 0, *d_gaussian_d = 0;

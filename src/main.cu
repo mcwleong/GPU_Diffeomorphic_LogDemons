@@ -7,6 +7,7 @@
 #include "LogDemonsReg.cuh"
 #include "LogDemonsReg_testfun.cuh"
 #include "LogDemonsRegGPU.cuh"
+#include "LogDemonsRegGPU_testfun.cuh"
 #include "RegistrationIO.h"
 //#include "RegistrationGPU.cuh"
 
@@ -20,14 +21,14 @@ int main(int argc, char* argv[])
 		runtestfunctions();
 		std::cout << "Program exits, Press enter...";
 
-		getchar();
+	//	getchar();
 		return 0;
 	}
 
 	float *fixedData, *movingData;
 	unsigned int dim[3];
-	const char* FixPath = "..\\test_data\\FixedBrain_1.dat";
-	const char* MovPath = "..\\test_data\\MovingBrain_1.dat";
+	const char* FixPath = ".\\test_data\\FixedBrain_1.dat";
+	const char* MovPath = ".\\test_data\\MovingBrain_1.dat";
 
 	//Load data
 	FILE *file = fopen(FixPath, "rb");
@@ -66,6 +67,14 @@ int main(int argc, char* argv[])
 	}
 
 	LogDemonsRegGPU reg(fixedData, movingData, dim);
+	reg.debugOn(0);
+	//reg.LogDemonsReg::Register();
+	reg.opt.iteration_max =50;
+	reg.sigma_x = 1;
+	reg.sigma_i = 1;
+	reg.sigma_f = 2;
+	reg.sigma_d = 2;
+	
 	reg.Register();
 
 	//Cleanup
@@ -80,13 +89,25 @@ int main(int argc, char* argv[])
 
 void runtestfunctions(){
 
-	// I did not set up garbage collection for the test functions. Use with caution.
+	// I did not set up RAM cleanup for the test functions. Use with caution.
 	LogDemonsReg_testfun test;
+	//test._gradient();
 	//test._findupdate();
 	//test._imgaussian(3);
 	//test._iminterpolate();
 	//test._compose();
 	//test._expfield();
+	//test._jacobian();
 	//test._energy();
+
+	LogDemonsRegGPU_testfun GPUtest;
+	//GPUtest._gradient();
+	//GPUtest._findupdate();
+	//GPUtest._imgaussian(3);
+	//GPUtest._iminterpolate();
+	//GPUtest._compose();
+	//GPUtest._jacobian();
+	//GPUtest._expfield();
+	//GPUtest._energy();
 
 }
