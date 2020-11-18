@@ -64,7 +64,7 @@ public:
 	// device memory pointers
 	float *d_fixed = 0, *d_moving = 0, *d_deformedMoving = 0;
 	float *d_ux = 0, *d_uy = 0, *d_uz = 0, *d_vx = 0, *d_vy = 0, *d_vz = 0, *d_sx = 0, *d_sy = 0, *d_sz = 0, *d_normg2 = 0, *d_det_J = 0;
-	float *d_uxf = 0, *d_uyf = 0, *d_uzf = 0, *d_tsx = 0, *d_tsy = 0, *d_tsz = 0;;
+	float *d_uxf = 0, *d_uyf = 0, *d_uzf = 0, *d_tsx = 0, *d_tsy = 0, *d_tsz = 0;
 	float *d_en, *d_jac2;
 	int radius_f, radius_d;
 	float* gaussian_f = 0, *gaussian_d = 0;

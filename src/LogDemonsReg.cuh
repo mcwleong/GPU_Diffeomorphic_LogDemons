@@ -42,7 +42,7 @@ protected:
 
 
 	bool initialized = false;
-	bool debug = true;
+	bool debug = false;
 
 	// Image dimension
 	unsigned int dim[3], marginSize[3], len = 1;

@@ -104,9 +104,9 @@ void LogDemonsReg_testfun::_imgaussian(float sigma){
 	*/
 	opt.sigma_f = sigma;
 
-	const char* uxPath = "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\imguassian\\data\\ux.dat";
-	const char* uyPath = "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\imguassian\\data\\uy.dat";
-	const char* uzPath = "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\imguassian\\data\\uz.dat";
+	const char* uxPath = "D:\\GPU_Diffeomorphic_Demons_private\\test_data\\imguassian\\data\\ux.dat";
+	const char* uyPath = "D:\\GPU_Diffeomorphic_Demons_private\\test_data\\imguassian\\data\\uy.dat";
+	const char* uzPath = "D:\\GPU_Diffeomorphic_Demons_private\\test_data\\imguassian\\data\\uz.dat";
 
 	// Load data
 	// Define dimension, which directly access the variable "dim" and "len" on the base class
@@ -148,11 +148,10 @@ void LogDemonsReg_testfun::_imgaussian(float sigma){
 	fclose(file);
 
 	imgaussian(ux, uy, uz, opt.sigma_f);
-	
-	saveImage<float>(ux, dim, "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\imguassian\\cpu_results\\uxg.bin");
-	saveImage<float>(uy, dim, "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\imguassian\\cpu_results\\uyg.bin");
-	saveImage<float>(uz, dim, "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\imguassian\\cpu_results\\uzg.bin");
 
+	saveImage<float>(ux, dim, "D:\\GPU_Diffeomorphic_Demons_private\\test_data\\imguassian\\CPU_Results\\uxg_cpu.dat");
+	saveImage<float>(uy, dim, "D:\\GPU_Diffeomorphic_Demons_private\\test_data\\imguassian\\CPU_Results\\uyg_cpu.dat");
+	saveImage<float>(uz, dim, "D:\\GPU_Diffeomorphic_Demons_private\\test_data\\imguassian\\CPU_Results\\uzg_cpu.dat");
 
 }
 

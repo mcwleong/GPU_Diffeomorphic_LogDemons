@@ -223,7 +223,7 @@ void LogDemonsReg::Register()
 				printf("e: %f\n", energy_vec[iter]);
 				printf("e-5 - e: %f\n", energy_vec[iter - 5] - energy_vec[iter]);
 				printf("e[0] * opt.stop_criterium: %f\n", energy_vec[0] * opt.stop_criterium);
-				//break;
+				break;
 			}
 		}
 		std::string filename = "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\register_results\\cpu_results\\Mp_" + to_string(iter+1) + std::string(".bin");
@@ -589,7 +589,11 @@ void LogDemonsReg::expfield() {
 	}
 
 	//Perform explicit first order integration
-	float scale = pow((float)2, -N);
+	float scale = 1;
+	for (int i = 0; i < N; i++) {
+		scale /= 2;
+	}
+	
 	for (unsigned int i = 0; i < len; ++i){
 		sx[i] = vx[i] * scale;
 		sy[i] = vy[i] * scale;
@@ -615,29 +619,7 @@ void LogDemonsReg::imgaussian(float* fx, float* fy, float* fz, float sigma) {
 	for (int i = 0; i < kernel_radius + 1; ++i){
 		weight[i] /= (2*sum);
 	}
-
-
-	//  //// The hard way
-	//for (unsigned int z = kernel_radius; z < dim[2] - kernel_radius; ++z){
-	//	for (unsigned int y = kernel_radius; y < dim[1] - kernel_radius; ++y){
-	//		for (unsigned int x = kernel_radius; x < dim[0] - kernel_radius; ++x){
-	//			int idx = pos(x, y, z);
-	//			for (int k = -kernel_radius; k <= kernel_radius; ++k){
-	//				for (int j = -kernel_radius; j <= kernel_radius; ++j){
-	//					for (int i = -kernel_radius; i <= kernel_radius; ++i){
-	//						float this_weight = weight[abs(i)]*weight[abs(j)]*weight[abs(k)];
-	//						x_p[idx] += this_weight*fx[pos(x + i, y + j, z + k)];
-	//						y_p[idx] += this_weight*fy[pos(x + i, y + j, z + k)];
-	//						z_p[idx] += this_weight*fz[pos(x + i, y + j, z + k)];
-
-	//					}
-	//				}
-	//			}
-	//		}
-	//	}
-	//}
-
-
+	
 	//pass x
 	for (unsigned int z = kernel_radius; z < dim[2] - kernel_radius; ++z){
 		for (unsigned int y = kernel_radius; y < dim[1] - kernel_radius; ++y){

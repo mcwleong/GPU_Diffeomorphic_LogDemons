@@ -1,27 +1,16 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
-PROJECT(CUDA_diffeomorphic_logdemons_3D)
+cmake_minimum_required(VERSION 3.19)
 
-if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-    MESSAGE( "64 bits compiler detected" )
-    SET( EX_PLATFORM 64 )
-    SET( EX_PLATFORM_NAME "x64" )
-else( CMAKE_SIZEOF_VOID_P EQUAL 8 ) 
-    MESSAGE( "32 bits compiler detected" )
-    SET( EX_PLATFORM 32 )
-    SET( EX_PLATFORM_NAME "x86" )
-endif( CMAKE_SIZEOF_VOID_P EQUAL 8 ) 
-
-if (EX_PLATFORM=64)
-	set( MSVC_FLAGS "${MSVC_FLAGS} -DWIN64" )
-endif ()
-add_compile_options("/wd4819")
-
-FIND_PACKAGE(CUDA REQUIRED)
-set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} --use_fast_math" )
-SET(CMAKE_EXE_LINKER_FLAGS " ${CMAKE_EXE_LINKER_FLAGS} /LARGEADDRESSAWARE") 
-
-file(GLOB sources "*.cpp" "*.h" "*.cu" "*.cuh" )
-MESSAGE(${sources})
-cuda_add_executable(CUDA_diffeomorphic_logdemons_3D ${sources})
-
+  project(CUDA_diffeomorphic_logdemons_3D_ITK LANGUAGES CXX CUDA)
+  SET( EX_PLATFORM 64 )
+  SET( EX_PLATFORM_NAME "x64" )  
  
+
+ find_package(CUDAToolkit)
+  find_package(ITK REQUIRED)
+  include(${ITK_USE_FILE})
+
+
+file(GLOB sources "*.cpp" "*.h" "*.cu" "*.cuh")
+add_executable(CUDA_diffeomorphic_logdemons_3D_ITK ${sources})
+
+target_link_libraries(CUDA_diffeomorphic_logdemons_3D_ITK ${ITK_LIBRARIES})  

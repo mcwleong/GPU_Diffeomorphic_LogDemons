@@ -135,6 +135,7 @@ void LogDemonsRegGPU::syncGPUMemory(){
 	cudaMemcpy(sx, d_sx, sizeof(float)*len, cudaMemcpyDeviceToHost);
 	cudaMemcpy(sy, d_sy, sizeof(float)*len, cudaMemcpyDeviceToHost);
 	cudaMemcpy(sz, d_sz, sizeof(float)*len, cudaMemcpyDeviceToHost);
+	cudaDeviceSynchronize();
 }
 
 
@@ -142,6 +143,8 @@ void LogDemonsRegGPU::initialize(){
 	// initialize the CPU memory first
 	LogDemonsReg::initialize();
 	d3_dim = dim3(dim[0], dim[1], dim[2]);
+
+	unsigned int gpulen = (int)(ceil(float(len / 32.0f))) * 32; //enforce memory alignment by enabling trailing zeros
 
 	// Initialize GPU memory for images
 	cudaMalloc((void**)&d_fixed, sizeof(float)*len);
@@ -153,46 +156,46 @@ void LogDemonsRegGPU::initialize(){
 	getCudaError("GPU Image initialization");
 
 	// Initialize GPU memory for vector field
-	cudaMalloc((void**)&d_ux, sizeof(float)*len);
-	cudaMemset(d_ux, 0, sizeof(float)*len);
-	cudaMalloc((void**)&d_uy, sizeof(float)*len);
-	cudaMemset(d_uy, 0, sizeof(float)*len);
-	cudaMalloc((void**)&d_uz, sizeof(float)*len);
-	cudaMemset(d_uz, 0, sizeof(float)*len);
-	cudaMalloc((void**)&d_vx, sizeof(float)*len);
-	cudaMemset(d_vx, 0, sizeof(float)*len);
-	cudaMalloc((void**)&d_vy, sizeof(float)*len);
-	cudaMemset(d_vy, 0, sizeof(float)*len);
-	cudaMalloc((void**)&d_vz, sizeof(float)*len);
-	cudaMemset(d_vz, 0, sizeof(float)*len);
-	cudaMalloc((void**)&d_sx, sizeof(float)*len);
-	cudaMemset(d_sx, 0, sizeof(float)*len);
-	cudaMalloc((void**)&d_sy, sizeof(float)*len);
-	cudaMemset(d_sy, 0, sizeof(float)*len);
-	cudaMalloc((void**)&d_sz, sizeof(float)*len);
-	cudaMemset(d_sz, 0, sizeof(float)*len);
+	cudaMalloc((void**)&d_ux, sizeof(float)*gpulen);
+	cudaMemset(d_ux, 0, sizeof(float)*gpulen);
+	cudaMalloc((void**)&d_uy, sizeof(float)*gpulen);
+	cudaMemset(d_uy, 0, sizeof(float)*gpulen);
+	cudaMalloc((void**)&d_uz, sizeof(float)*gpulen);
+	cudaMemset(d_uz, 0, sizeof(float)*gpulen);
+	cudaMalloc((void**)&d_vx, sizeof(float)*gpulen);
+	cudaMemset(d_vx, 0, sizeof(float)*gpulen);
+	cudaMalloc((void**)&d_vy, sizeof(float)*gpulen);
+	cudaMemset(d_vy, 0, sizeof(float)*gpulen);
+	cudaMalloc((void**)&d_vz, sizeof(float)*gpulen);
+	cudaMemset(d_vz, 0, sizeof(float)*gpulen);
+	cudaMalloc((void**)&d_sx, sizeof(float)*gpulen);
+	cudaMemset(d_sx, 0, sizeof(float)*gpulen);
+	cudaMalloc((void**)&d_sy, sizeof(float)*gpulen);
+	cudaMemset(d_sy, 0, sizeof(float)*gpulen);
+	cudaMalloc((void**)&d_sz, sizeof(float)*gpulen);
+	cudaMemset(d_sz, 0, sizeof(float)*gpulen);
 	getCudaError("GPU Vector field Memory initialization");
 
 	// Initialize GPU memory for temp memory
-	cudaMalloc((void**)&d_normg2, sizeof(float)*len);
-	cudaMemset(d_normg2, 0, sizeof(float)*len);
-	cudaMalloc((void**)&d_uxf, sizeof(float)*len);
-	cudaMemset(d_uxf, 0, sizeof(float)*len);
-	cudaMalloc((void**)&d_uyf, sizeof(float)*len);
-	cudaMemset(d_uyf, 0, sizeof(float)*len);
-	cudaMalloc((void**)&d_uzf, sizeof(float)*len);
-	cudaMemset(d_uzf, 0, sizeof(float)*len);
-	cudaMalloc((void**)&d_tsx, sizeof(float)*len);
-	cudaMemset(d_uxf, 0, sizeof(float)*len);
-	cudaMalloc((void**)&d_tsy, sizeof(float)*len);
-	cudaMemset(d_uyf, 0, sizeof(float)*len);
-	cudaMalloc((void**)&d_tsz, sizeof(float)*len);
-	cudaMemset(d_uzf, 0, sizeof(float)*len);
-	cudaMalloc((void**)&d_jac2, sizeof(float)*len);
-	cudaMemset(d_jac2, 0, sizeof(float)*len);
+	cudaMalloc((void**)&d_normg2, sizeof(float)*gpulen);
+	cudaMemset(d_normg2, 0, sizeof(float)*gpulen);
+	cudaMalloc((void**)&d_uxf, sizeof(float)*gpulen);
+	cudaMemset(d_uxf, 0, sizeof(float)*gpulen);
+	cudaMalloc((void**)&d_uyf, sizeof(float)*gpulen);
+	cudaMemset(d_uyf, 0, sizeof(float)*gpulen);
+	cudaMalloc((void**)&d_uzf, sizeof(float)*gpulen);
+	cudaMemset(d_uzf, 0, sizeof(float)*gpulen);
+	cudaMalloc((void**)&d_tsx, sizeof(float)*gpulen);
+	cudaMemset(d_uxf, 0, sizeof(float)*gpulen);
+	cudaMalloc((void**)&d_tsy, sizeof(float)*gpulen);
+	cudaMemset(d_uyf, 0, sizeof(float)*gpulen);
+	cudaMalloc((void**)&d_tsz, sizeof(float)*gpulen);
+	cudaMemset(d_uzf, 0, sizeof(float)*gpulen);
+	cudaMalloc((void**)&d_jac2, sizeof(float)*gpulen);
+	cudaMemset(d_jac2, 0, sizeof(float)*gpulen);
 
-	cudaMalloc((void**)&d_en, sizeof(float)*len);
-	cudaMemset(d_en, 0, sizeof(float)*len);
+	cudaMalloc((void**)&d_en, sizeof(float)*gpulen);
+	cudaMemset(d_en, 0, sizeof(float)*gpulen);
 
 
 	// Initialize GPU 3D Array memory
@@ -220,7 +223,6 @@ void LogDemonsRegGPU::Register(){
 	LogDemonsRegGPU::initialize();
 
 	for (int iter = 0; iter < opt.iteration_max; ++iter) {
-		float v2max;
 
 		/*	Given the current transformation s, compute a correspondence update field u
 		by mimimizing E(u) w.r.t. u		*/
@@ -231,6 +233,7 @@ void LogDemonsRegGPU::Register(){
 
 		/*	Let v <- v compose u	*/
 		compose();
+
 
 		/*	For a diffusion like regularization let s <- K(sigma_d)*c (else, s<-c)	*/
 		imgaussian(d_vx, d_vy, d_vz, tex_gauss_d, radius_d);
@@ -245,15 +248,16 @@ void LogDemonsRegGPU::Register(){
 		energy_vec.push_back(energy());
 		printf("Iteration %i - Energy: %f\n", iter + 1, energy_vec.back());
 
-		//if (iter > 4){
-		//	if ((energy_vec[iter - 5] - energy_vec[iter]) < (energy_vec[0] * opt.stop_criterium)){
-		//		printf("e-5: %f\n", energy_vec[iter - 5]);
-		//		printf("e: %f\n", energy_vec[iter]);
-		//		printf("e-5 - e: %f\n", energy_vec[iter - 5] - energy_vec[iter]);
-		//		printf("e[0] * opt.stop_criterium: %f\n", energy_vec[0] * opt.stop_criterium);
-		//		break;
-		//	}
-		//}
+
+		if (iter > 4){
+			if ((energy_vec[iter - 5] - energy_vec[iter]) < (energy_vec[0] * opt.stop_criterium)){
+				printf("e-5: %f\n", energy_vec[iter - 5]);
+				printf("e: %f\n", energy_vec[iter]);
+				printf("e-5 - e: %f\n", energy_vec[iter - 5] - energy_vec[iter]);
+				printf("e[0] * opt.stop_criterium: %f\n", energy_vec[0] * opt.stop_criterium);
+				//break;
+			}
+		}
 
 	}
 	syncGPUMemory();
@@ -261,6 +265,7 @@ void LogDemonsRegGPU::Register(){
 	for (int iter = 0; iter < energy_vec.size(); ++iter){
 		printf("Iteration %i - Energy: %f\n", iter + 1, energy_vec[iter]);
 	}
+	//getchar();
 }
 
 void LogDemonsRegGPU::gradient(float* d_I, float* d_fx, float* d_fy, float* d_fz){
@@ -345,7 +350,7 @@ void LogDemonsRegGPU::findupdate(){
 	dim3 gridsize = dim3(ceil(float(len) / float(blocksize.x)), 1, 1);
 
 	if (debug){
-		cout << "Update Veector  kernel..." << endl;
+		cout << "Update Veector kernel..." << endl;
 		cout << "blocksize: " << blocksize.x << " " << blocksize.y << " " << blocksize.z << " " << endl;
 		cout << "gridsize: " << gridsize.x << " " << gridsize.y << " " << gridsize.z << " " << endl;
 	}
@@ -361,7 +366,8 @@ void LogDemonsRegGPU::findupdate(){
 	}
 }
 
-void LogDemonsRegGPU::imgaussian(float* d_fx, float* d_fy, float* d_fz, cudaTextureObject_t tex, int radius){
+
+void LogDemonsRegGPU::imgaussian(float*  d_fx, float*  d_fy, float*  d_fz, cudaTextureObject_t tex, int radius){
 	
 	//X-direction
 	dim3 blocksize;
@@ -426,14 +432,15 @@ void LogDemonsRegGPU::imgaussian(float* d_fx, float* d_fy, float* d_fz, cudaText
 	}
 }
 
-void LogDemonsRegGPU::compose(){
+void LogDemonsRegGPU::compose() {
 	dim3 blocksize;
 	dim3 gridsize;
 
 	blocksize = dim3(dim[0], 1, 1);
 	gridsize = dim3(dim[1], dim[2], 1);
-	coordinateImageKernel KERNEL_ARGS2(gridsize, blocksize) (d_vx, d_vy, d_vz, d3_dim, addCoordinate);
-	coordinateImageKernel KERNEL_ARGS2(gridsize, blocksize) (d_ux, d_uy, d_uz, d3_dim, addCoordinate);
+
+	addCoordinateImageKernel KERNEL_ARGS2(gridsize, blocksize) (d_vx, d_vy, d_vz, d3_dim);
+	addCoordinateImageKernel KERNEL_ARGS2(gridsize, blocksize) (d_ux, d_uy, d_uz, d3_dim);
 
 	tex_vx = CreateTextureObject(d_vx, d_cuArr_vx);
 	tex_vy = CreateTextureObject(d_vy, d_cuArr_vy);
@@ -443,8 +450,7 @@ void LogDemonsRegGPU::compose(){
 	interpolate(tex_vy, d_ux, d_uy, d_uz, d_vy);
 	interpolate(tex_vz, d_ux, d_uy, d_uz, d_vz);
 
-	coordinateImageKernel KERNEL_ARGS2(gridsize, blocksize) (d_vx, d_vy, d_vz, d3_dim, substractCoordinate);
-
+	subtractCoordinateImageKernel KERNEL_ARGS2(gridsize, blocksize) (d_vx, d_vy, d_vz, d3_dim );
 
 	cudaDestroyTextureObject(tex_vx);
 	getCudaError("destroyTextureObject");
@@ -460,7 +466,7 @@ void LogDemonsRegGPU::self_compose(){
 
 	blocksize = dim3(dim[0], 1, 1);
 	gridsize = dim3(dim[1], dim[2], 1);
-	coordinateImageKernel KERNEL_ARGS2(gridsize, blocksize) (d_sx, d_sy, d_sz, d3_dim, addCoordinate);
+	addCoordinateImageKernel KERNEL_ARGS2(gridsize, blocksize) (d_sx, d_sy, d_sz, d3_dim);
 
 	tex_vx = CreateTextureObject(d_sx, d_cuArr_vx);
 	tex_vy = CreateTextureObject(d_sy, d_cuArr_vy);
@@ -474,7 +480,7 @@ void LogDemonsRegGPU::self_compose(){
 	cudaMemcpy(d_sy, d_tsy, sizeof(float)*len, cudaMemcpyDeviceToDevice);
 	cudaMemcpy(d_sz, d_tsz, sizeof(float)*len, cudaMemcpyDeviceToDevice);
 
-	coordinateImageKernel KERNEL_ARGS2(gridsize, blocksize) (d_sx, d_sy, d_sz, d3_dim, substractCoordinate);
+	subtractCoordinateImageKernel KERNEL_ARGS2(gridsize, blocksize) (d_sx, d_sy, d_sz, d3_dim);
 
 	cudaDestroyTextureObject(tex_vx);
 	getCudaError("destroyTextureObject");
@@ -490,7 +496,7 @@ void LogDemonsRegGPU::iminterpolate(){
 
 	blocksize = dim3(dim[0], 1, 1);
 	gridsize = dim3(dim[1], dim[2], 1);
-	coordinateImageKernel KERNEL_ARGS2(gridsize, blocksize) (d_sx, d_sy, d_sz, d3_dim, addCoordinate);
+	addCoordinateImageKernel KERNEL_ARGS2(gridsize, blocksize) (d_sx, d_sy, d_sz, d3_dim);
 
 	getCudaError("coordinateImageKernel");
 	cudaDeviceSynchronize();
@@ -500,8 +506,11 @@ void LogDemonsRegGPU::iminterpolate(){
 
 void LogDemonsRegGPU::interpolate(cudaTextureObject_t tex_I, float* d_sx, float* d_sy, float* d_sz, float* d_Ip){
 
-	dim3 blocksize = dim3(8, 8, 8);
-	dim3 gridsize = dim3(ceil(double(dim[0]) / double(blocksize.x)), ceil(double(dim[1]) / double(blocksize.y)), ceil(double(dim[2]) / double(blocksize.z)));
+	//dim3 blocksize = dim3(8, 8, 8);
+	//dim3 gridsize = dim3(ceil(double(dim[0]) / double(blocksize.x)), ceil(double(dim[1]) / double(blocksize.y)), ceil(double(dim[2]) / double(blocksize.z)));
+
+	dim3 blocksize = dim3(dim[0], 1, 1);
+	dim3 gridsize = dim3(dim[1], dim[2], 1);
 
 	if (debug){
 		cout << "interpolating image..." << endl;
@@ -509,9 +518,9 @@ void LogDemonsRegGPU::interpolate(cudaTextureObject_t tex_I, float* d_sx, float*
 		cout << "gridsize: " << gridsize.x << " " << gridsize.y << " " << gridsize.z << " " << endl;
 	}
 	interpolateImageKernel KERNEL_ARGS2(gridsize, blocksize) (tex_I, d_sx, d_sy, d_sz, d_Ip, d3_dim);
-	
+		cudaDeviceSynchronize();
+
 	getCudaError("interpolateImageKernel");
-	cudaDeviceSynchronize();
 	getCudaError("DeviceSynchorize interpolateImageKernel");
 }
 
@@ -550,7 +559,11 @@ void LogDemonsRegGPU::expfield(){
 		N++;
 		v2max *= 0.5;
 	}
-	float scale = pow((float)2, -N);
+	float scale = 1;
+	for (int i = 0; i < N; i++) {
+		scale /= 2;
+	}
+
 
 	if (debug){
 		cout << "First-order integration..." << endl;

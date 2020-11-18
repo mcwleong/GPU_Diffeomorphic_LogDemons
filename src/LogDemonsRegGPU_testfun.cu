@@ -7,8 +7,8 @@ void LogDemonsRegGPU_testfun::_findupdate(){
 	Output: velocity update field in ux, uy, uz
 	*/
 
-	const char* FixPath = ".\\test_data\\findupdate\\data\\F.dat";
-	const char* MovPath = ".\\test_data\\findupdate\\data\\Mp.dat";
+	const char* FixPath = "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\findupdate\\data\\F.dat";
+	const char* MovPath = "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\findupdate\\data\\Mp.dat";
 
 	// Load data
 	// Define dimension, which directly access the variable "dim" and "len" on the base class
@@ -82,9 +82,9 @@ void LogDemonsRegGPU_testfun::_findupdate(){
 	cudaMemcpy(uz, d_uz, sizeof(float)*len, cudaMemcpyDeviceToHost);
 
 	
-	saveImage<float>(ux, dim, ".\\test_data\\findupdate\\gpu_results\\ux_gpu.bin");
-	saveImage<float>(uy, dim, ".\\test_data\\findupdate\\gpu_results\\uy_gpu.bin");
-	saveImage<float>(uz, dim, ".\\test_data\\findupdate\\gpu_results\\uz_gpu.bin");
+	saveImage<float>(ux, dim, "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\findupdate\\gpu_results\\ux_gpu.bin");
+	saveImage<float>(uy, dim, "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\findupdate\\gpu_results\\uy_gpu.bin");
+	saveImage<float>(uz, dim, "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\findupdate\\gpu_results\\uz_gpu.bin");
 }
 
 
@@ -94,7 +94,7 @@ void LogDemonsRegGPU_testfun::_gradient(){
 	Output: velocity update field in uxf, uyf, uzf
 	*/
 
-	const char* FixPath = ".\\test_data\\findupdate\\data\\F.dat";
+	const char* FixPath = "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\findupdate\\data\\F.dat";
 
 
 	// Load data
@@ -142,9 +142,9 @@ void LogDemonsRegGPU_testfun::_gradient(){
 	cudaMemcpy(uyf, d_uy, sizeof(float)*len, cudaMemcpyDeviceToHost);
 	cudaMemcpy(uzf, d_uz, sizeof(float)*len, cudaMemcpyDeviceToHost);
 
-	saveImage<float>(uxf, dim, ".\\test_data\\gradient\\gpu_results\\ux_gpu.bin");
-	saveImage<float>(uyf, dim, ".\\test_data\\gradient\\gpu_results\\uy_gpu.bin");
-	saveImage<float>(uzf, dim, ".\\test_data\\gradient\\gpu_results\\uz_gpu.bin");
+	saveImage<float>(uxf, dim, "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\gradient\\gpu_results\\ux_gpu.bin");
+	saveImage<float>(uyf, dim, "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\gradient\\gpu_results\\uy_gpu.bin");
+	saveImage<float>(uzf, dim, "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\gradient\\gpu_results\\uz_gpu.bin");
 }
 
 
@@ -157,10 +157,9 @@ void LogDemonsRegGPU_testfun::_imgaussian(float sigma){
 	*/
 	opt.sigma_f = sigma;
 
-	const char* uxPath = ".\\test_data\\imguassian\\data\\ux.dat";
-	const char* uyPath = ".\\test_data\\imguassian\\data\\uy.dat";
-	const char* uzPath = ".\\test_data\\imguassian\\data\\uz.dat";
-
+	const char* uxPath = "D:\\GPU_Diffeomorphic_Demons_private\\test_data\\imguassian\\data\\ux.dat";
+	const char* uyPath = "D:\\GPU_Diffeomorphic_Demons_private\\test_data\\imguassian\\data\\uy.dat";
+	const char* uzPath = "D:\\GPU_Diffeomorphic_Demons_private\\test_data\\imguassian\\data\\uz.dat";
 	// Load data
 	// Define dimension, which directly access the variable "dim" and "len" on the base class
 	// Assumes both bin file shares the same dimension
@@ -213,18 +212,17 @@ void LogDemonsRegGPU_testfun::_imgaussian(float sigma){
 
 	// Compute gaussian blur using GPU
 	imgaussian(d_ux, d_uy, d_uz, tex_gauss_d, radius_d);
-
+	
+	cudaDeviceSynchronize();
+	//imgaussian(d_ux, d_uy, d_uz, tex_gauss_d, radius_d);
 	// Fetch results from GPU
 	cudaMemcpy(ux, d_ux, sizeof(float)*len, cudaMemcpyDeviceToHost);
 	cudaMemcpy(uy, d_uy, sizeof(float)*len, cudaMemcpyDeviceToHost);
 	cudaMemcpy(uz, d_uz, sizeof(float)*len, cudaMemcpyDeviceToHost);
 
-
-
-	saveImage<float>(ux, dim, ".\\test_data\\imguassian\\gpu_results\\uxg_gpu.bin");
-	saveImage<float>(uy, dim, ".\\test_data\\imguassian\\gpu_results\\uyg_gpu.bin");
-	saveImage<float>(uz, dim, ".\\test_data\\imguassian\\gpu_results\\uzg_gpu.bin");
-
+	saveImage<float>(ux, dim, "D:\\GPU_Diffeomorphic_Demons_private\\test_data\\imguassian\\GPU_Results\\uxg_gpu.bin");
+	saveImage<float>(uy, dim, "D:\\GPU_Diffeomorphic_Demons_private\\test_data\\imguassian\\GPU_Results\\uyg_gpu.bin");
+	saveImage<float>(uz, dim, "D:\\GPU_Diffeomorphic_Demons_private\\test_data\\imguassian\\GPU_Results\\uzg_gpu.bin");
 
 }
 
@@ -235,10 +233,10 @@ void LogDemonsRegGPU_testfun::_iminterpolate(){
 	Output: Warped image in deformedMoving
 	*/
 
-	const char* MovPath = ".\\test_data\\iminterpolate\\data\\M.dat";
-	const char* sxPath = ".\\test_data\\iminterpolate\\data\\sy.dat";
-	const char* syPath = ".\\test_data\\iminterpolate\\data\\sx.dat";
-	const char* szPath = ".\\test_data\\iminterpolate\\data\\sz.dat";
+	const char* MovPath = "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\iminterpolate\\data\\M.dat";
+	const char* sxPath = "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\iminterpolate\\data\\sy.dat";
+	const char* syPath = "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\iminterpolate\\data\\sx.dat";
+	const char* szPath = "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\iminterpolate\\data\\sz.dat";
 
 	// Load data
 	// Define dimension, which directly access the variable "dim" and "len" on the base class
@@ -303,7 +301,7 @@ void LogDemonsRegGPU_testfun::_iminterpolate(){
 
 	cudaMemcpy(deformedMoving, d_deformedMoving, sizeof(float)*len, cudaMemcpyDeviceToHost);
 
-	saveImage<float>(deformedMoving, dim, ".\\test_data\\iminterpolate\\gpu_results\\Mp_gpu.bin");
+	saveImage<float>(deformedMoving, dim, "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\iminterpolate\\gpu_results\\Mp_gpu.bin");
 
 }
 
@@ -314,12 +312,12 @@ void LogDemonsRegGPU_testfun::_compose(){
 	Output: composed field in vx vy vz
 	*/
 	
-	const char* uxPath = ".\\test_data\\compose\\data\\ux.dat";
-	const char* uyPath = ".\\test_data\\compose\\data\\uy.dat";
-	const char* uzPath = ".\\test_data\\compose\\data\\uz.dat";
-	const char* vxPath = ".\\test_data\\compose\\data\\vx.dat";
-	const char* vyPath = ".\\test_data\\compose\\data\\vy.dat";
-	const char* vzPath = ".\\test_data\\compose\\data\\vz.dat";
+	const char* uxPath = "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\compose\\data\\ux.dat";
+	const char* uyPath = "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\compose\\data\\uy.dat";
+	const char* uzPath = "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\compose\\data\\uz.dat";
+	const char* vxPath = "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\compose\\data\\vx.dat";
+	const char* vyPath = "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\compose\\data\\vy.dat";
+	const char* vzPath = "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\compose\\data\\vz.dat";
 
 	// Load data
 	// Define dimension, which directly access the variable "dim" and "len" on the base class
@@ -404,9 +402,9 @@ void LogDemonsRegGPU_testfun::_compose(){
 	cudaMemcpy(vz, d_vz, sizeof(float)*len, cudaMemcpyDeviceToHost);
 
 	// save results
-	saveImage<float>(vx, dim, ".\\test_data\\compose\\gpu_results\\vx_gpu.bin");
-	saveImage<float>(vy, dim, ".\\test_data\\compose\\gpu_results\\vy_gpu.bin");
-	saveImage<float>(vz, dim, ".\\test_data\\compose\\gpu_results\\vz_gpu.bin");
+	saveImage<float>(vx, dim, "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\compose\\gpu_results\\vx_gpu.bin");
+	saveImage<float>(vy, dim, "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\compose\\gpu_results\\vy_gpu.bin");
+	saveImage<float>(vz, dim, "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\compose\\gpu_results\\vz_gpu.bin");
 }
 
 void LogDemonsRegGPU_testfun::_expfield(){
@@ -415,9 +413,9 @@ void LogDemonsRegGPU_testfun::_expfield(){
 	Memory accessed: x_p, y_p, z_p
 	Output: sx, sy, sz
 	*/
-	const char* vxPath = ".\\test_data\\expfield\\data\\vxg.dat";
-	const char* vyPath = ".\\test_data\\expfield\\data\\vyg.dat";
-	const char* vzPath = ".\\test_data\\expfield\\data\\vzg.dat";
+	const char* vxPath = "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\expfield\\data\\vxg.dat";
+	const char* vyPath = "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\expfield\\data\\vyg.dat";
+	const char* vzPath = "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\expfield\\data\\vzg.dat";
 
 	// Load data
 	// Define dimension, which directly access the variable "dim" and "len" on the base class
@@ -491,9 +489,9 @@ void LogDemonsRegGPU_testfun::_expfield(){
 	cudaMemcpy(sy, d_sy, sizeof(float)*len, cudaMemcpyDeviceToHost);
 	cudaMemcpy(sz, d_sz, sizeof(float)*len, cudaMemcpyDeviceToHost);
 
-	saveImage<float>(sx, dim, ".\\test_data\\expfield\\gpu_results\\sx_gpu.bin");
-	saveImage<float>(sy, dim, ".\\test_data\\expfield\\gpu_results\\sy_gpu.bin");
-	saveImage<float>(sz, dim, ".\\test_data\\expfield\\gpu_results\\sz_gpu.bin");
+	saveImage<float>(sx, dim, "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\expfield\\gpu_results\\sx_gpu.bin");
+	saveImage<float>(sy, dim, "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\expfield\\gpu_results\\sy_gpu.bin");
+	saveImage<float>(sz, dim, "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\expfield\\gpu_results\\sz_gpu.bin");
 }
 
 
@@ -504,9 +502,9 @@ void LogDemonsRegGPU_testfun::_jacobian(){
 	Output: sx, sy, sz
 	*/
 
-	const char* sxPath = ".\\test_data\\jacobian\\data\\sx.dat";
-	const char* syPath = ".\\test_data\\jacobian\\data\\sy.dat";
-	const char* szPath = ".\\test_data\\jacobian\\data\\sz.dat";
+	const char* sxPath = "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\jacobian\\data\\sx.dat";
+	const char* syPath = "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\jacobian\\data\\sy.dat";
+	const char* szPath = "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\jacobian\\data\\sz.dat";
 
 	short sdim[3];
 	FILE *file = fopen(sxPath, "rb");
@@ -556,7 +554,7 @@ void LogDemonsRegGPU_testfun::_jacobian(){
 	
 	cudaMemcpy(jac, d_en, sizeof(float)*len, cudaMemcpyDeviceToHost);
 
-	saveImage<float>(jac, dim, ".\\test_data\\jacobian\\gpu_results\\jac_gpu.bin");
+	saveImage<float>(jac, dim, "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\jacobian\\gpu_results\\jac_gpu.bin");
 	
 	//printf("%f", e);
 	
@@ -570,11 +568,11 @@ void LogDemonsRegGPU_testfun::_energy(){
 	Output: sx, sy, sz
 	*/
 
-	const char* FixPath = ".\\test_data\\energy\\data\\F.dat";
-	const char* MovPath = ".\\test_data\\energy\\data\\Mp.dat";
-	const char* sxPath = ".\\test_data\\energy\\data\\sx.dat";
-	const char* syPath = ".\\test_data\\energy\\data\\sy.dat";
-	const char* szPath = ".\\test_data\\energy\\data\\sz.dat";
+	const char* FixPath = "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\energy\\data\\F.dat";
+	const char* MovPath = "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\energy\\data\\Mp.dat";
+	const char* sxPath = "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\energy\\data\\sx.dat";
+	const char* syPath = "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\energy\\data\\sy.dat";
+	const char* szPath = "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\energy\\data\\sz.dat";
 
 	short sdim[3];
 	FILE *file = fopen(sxPath, "rb");
@@ -640,7 +638,7 @@ void LogDemonsRegGPU_testfun::_energy(){
 
 	cudaMemcpy(jac, d_en, sizeof(float)*len, cudaMemcpyDeviceToHost);
 
-	saveImage<float>(jac, dim, ".\\test_data\\jacobian\\gpu_results\\jac_gpu.bin");
+	saveImage<float>(jac, dim, "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\jacobian\\gpu_results\\jac_gpu.bin");
 
 	//printf("%f", e);
 

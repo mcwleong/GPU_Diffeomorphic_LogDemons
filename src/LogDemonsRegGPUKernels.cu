@@ -1,6 +1,6 @@
 #include "LogDemonsRegGPUKernels.cuh"
 
-__global__ void gradientKernel(float* __restrict__ I, float* fg, int dir, dim3 dim){
+__global__ void gradientKernel(float* __restrict__ I, float* __restrict__  fg, int dir, dim3 dim){
 	extern  __shared__ float sh[];
 
 	dim3 tpos;
@@ -10,7 +10,7 @@ __global__ void gradientKernel(float* __restrict__ I, float* fg, int dir, dim3 d
 	float tg;
 
 
-		// x direction
+	// x direction
 	if (dir == 0){
 		// blocksize = {dim[0], 1, 1}
 		// gridsize = {dim[1], dim[2], 1)
@@ -141,8 +141,7 @@ __global__ void gradientKernel(float* __restrict__ I, float* fg, int dir, dim3 d
 	}
 }
 
-/* Requires further optimization */
-__global__ void updateKernel(float* F, float* Mp, float* ux, float* uy, float* uz, float* uxf, float* uyf, float* uzf,  float alpha2, unsigned int len){
+__global__ void updateKernel(float* F, float* Mp, float* ux, float*  uy, float* uz, float*  uxf, float*  uyf, float* uzf,  float alpha2, unsigned int len){
 
 	unsigned int tidx = blockIdx.x* blockDim.x + threadIdx.x;
 	if (tidx <len)
@@ -166,11 +165,15 @@ __global__ void updateKernel(float* F, float* Mp, float* ux, float* uy, float* u
 		tuy *= scale;
 		tuz *= scale;
 
+		__syncthreads();
+
 		ux[tidx] = tux;
 		uy[tidx] = tuy;
 		uz[tidx] = tuz;
 	}
 }
+
+
 
 __global__ void gaussianKernel(float* I, cudaTextureObject_t tex, dim3 dim, int radius, int pass){
 	extern __shared__ float sh[];
@@ -318,7 +321,7 @@ __global__ void gaussianKernel(float* I, cudaTextureObject_t tex, dim3 dim, int 
 
 
 
-__global__ void coordinateImageKernel(float *vx, float* vy, float* vz, dim3 dim, AddSubtractCoordinateImage op){
+__global__ void addCoordinateImageKernel(float* __restrict__ vx, float* __restrict__ vy, float*  __restrict__ vz, dim3 dim) {
 	// blocksize: dim[0] 1 1
 	// gridsize: dim[1] dim[2] 1
 	
@@ -331,7 +334,45 @@ __global__ void coordinateImageKernel(float *vx, float* vy, float* vz, dim3 dim,
 	unsigned int tidx = gpos(tpos, dim);
 
 	if (tpos < dim){ 
-		if (op == addCoordinate){
+		vx[tidx] = vx[tidx] + tpos.x;
+		vy[tidx] = vy[tidx] + tpos.y;
+		vz[tidx] = vz[tidx] + tpos.z;	
+	}
+}
+
+__global__ void subtractCoordinateImageKernel(float* __restrict__ vx, float* __restrict__ vy, float*  __restrict__ vz, dim3 dim) {
+	// blocksize: dim[0] 1 1
+	// gridsize: dim[1] dim[2] 1
+
+	dim3 tpos = dim3(
+		threadIdx.x,
+		blockIdx.x,
+		blockIdx.y
+	);
+
+	unsigned int tidx = gpos(tpos, dim);
+
+	if (tpos < dim) {
+		vx[tidx] = vx[tidx] - tpos.x;
+		vy[tidx] = vy[tidx] - tpos.y;
+		vz[tidx] = vz[tidx] - tpos.z;
+	}
+}
+
+__global__ void coordinateImageKernel(float *vx, float* vy, float* vz, dim3 dim, AddSubtractCoordinateImage op) {
+	// blocksize: dim[0] 1 1
+	// gridsize: dim[1] dim[2] 1
+
+	dim3 tpos = dim3(
+		threadIdx.x,
+		blockIdx.x,
+		blockIdx.y
+	);
+
+	unsigned int tidx = gpos(tpos, dim);
+
+	if (tpos < dim) {
+		if (op == addCoordinate) {
 			vx[tidx] = vx[tidx] + threadIdx.x;
 			vy[tidx] = vy[tidx] + blockIdx.x;
 			vz[tidx] = vz[tidx] + blockIdx.y;
@@ -347,9 +388,9 @@ __global__ void coordinateImageKernel(float *vx, float* vy, float* vz, dim3 dim,
 
 __global__ void interpolateImageKernel(cudaTextureObject_t tex, float* sx, float* sy, float* sz, float* Ip, dim3 dim){
 	dim3 tpos = dim3(
-		threadIdx.x + blockIdx.x*blockDim.x,
-		threadIdx.y + blockIdx.y*blockDim.y,
-		threadIdx.z + blockIdx.z*blockDim.z
+		threadIdx.x,
+		blockIdx.x,
+		blockIdx.y
 		);
 	unsigned int tidx = gpos(tpos, dim);
 
@@ -382,7 +423,8 @@ __global__ void interpolateImageKernel(cudaTextureObject_t tex, float* sx, float
 		float d0 = yd * d01 + (1 - yd) * d00;
 		float d1 = yd * d11 + (1 - yd) * d10;
 
-		Ip[tidx] = zd * d1 + (1 - zd) * d0;*/
+		Ip[tidx] = zd * d1 + (1 - zd) * d0;
+		*/
 	
 	}
 }
@@ -394,7 +436,7 @@ __global__ void normalizeVectorKernel(float* fx, float* fy, float* fz, float* no
 	}
 }
 
-__global__ void scaleKernel(float* vx, float* vy, float* vz, float* sx, float* sy, float* sz, float scale, unsigned int len){
+__global__ void scaleKernel(float* __restrict__ vx, float* __restrict__ vy, float* __restrict__  vz, float* __restrict__  sx, float* __restrict__  sy, float* __restrict__ sz, float scale, unsigned int len){
 	unsigned int tidx = blockIdx.x* blockDim.x + threadIdx.x;
 	if (tidx < len){
 		sx[tidx] = vx[tidx] * scale;
@@ -405,7 +447,7 @@ __global__ void scaleKernel(float* vx, float* vy, float* vz, float* sx, float* s
 
 
 
-__global__ void jacobianKernel(float* sx, float* sy, float*sz, float* jac2, dim3 dim){
+__global__ void jacobianKernel(float* __restrict__ sx, float* __restrict__ sy, float* __restrict__ sz, float* jac2, dim3 dim){
 	
 	__shared__ float sh_sx[10][10][10];
 	__shared__ float sh_sy[10][10][10];
@@ -567,10 +609,10 @@ __global__ void jacobianKernel(float* sx, float* sy, float*sz, float* jac2, dim3
 	}
 }
 
-__global__ void energyKernel(float* Mp, float* F, float* jac2, float* en, float reg_weight, unsigned int len){
+__global__ void energyKernel(float*  __restrict__ Mp, float*  __restrict__ F, float*  __restrict__ jac2, float* __restrict__ en, float reg_weight, unsigned int len){
 	unsigned int tidx = threadIdx.x + blockIdx.x*blockDim.x;
 	float diff2 = Mp[tidx] - F[tidx];
 	diff2 = diff2*diff2;
 	
-	en[tidx] = diff2;//+reg_weight*jac2[tidx];
+	en[tidx] = diff2 + reg_weight*jac2[tidx];
 }
