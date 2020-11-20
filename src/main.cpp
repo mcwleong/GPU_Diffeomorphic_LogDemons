@@ -40,11 +40,15 @@ void runtestfunctions() {
   
 	float *fixedData, *movingData;
 	unsigned int dim[3];
-//	const char* FixPath = "D:\\GPU_Diffeomorphic_Demons_private\\test_data\\FixedBrain_1.dat";
-//	const char* MovPath = "D:\\GPU_Diffeomorphic_Demons_private\\test_data\\MovingBrain_1.dat";
+	
+	
+// Windows
+//	const char* FixPathdcm = "..\\data\\FixedBrain_1.dcm";
+//	const char* MovPathdcm = "..\\data\\MovingBrain_1.dcm";
 
-	const char* FixPathdcm = "..\\data\\FixedBrain_1.dcm";
-	const char* MovPathdcm = "..\\data\\MovingBrain_1.dcm";
+// Linux
+	const char* FixPathdcm = "../data/FixedBrain_1.dcm";
+	const char* MovPathdcm = "../data/MovingBrain_1.dcm";
 	
 	readDicomToBuffer(FixPathdcm, fixedData, dim);
 	readDicomToBuffer(MovPathdcm, movingData, dim);
