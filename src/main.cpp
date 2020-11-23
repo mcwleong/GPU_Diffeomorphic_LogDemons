@@ -52,15 +52,17 @@ void runtestfunctions() {
 	
 	readDicomToBuffer(FixPathdcm, fixedData, dim);
 	readDicomToBuffer(MovPathdcm, movingData, dim);
-
+	std::cout << dim[0] << " " << dim[1] << " " << dim[2] << std::endl;
 	LogDemonsRegGPU reg(fixedData, movingData, dim);
 	reg.debugOn(0);
 	//reg.LogDemonsReg::Register();
-	reg.opt.iteration_max = 50;
+	reg.opt.iteration_max = 75;
 	reg.Register();
 
 	reg.syncGPUMemory();
-
+	reg.getOutput();
+	
+	writefloatResultToDicomImage(readBufferToITKImagePtr(reg.Output_Mp, dim), "output.dcm");
 
 	//Cleanup
 	delete[] fixedData, movingData;

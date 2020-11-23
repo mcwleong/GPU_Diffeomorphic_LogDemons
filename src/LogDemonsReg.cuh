@@ -21,10 +21,21 @@ public:
 	// Destructor
 	~LogDemonsReg();
 
+	//Output
+	float* Output_Mp;
+	float* Output_vx;
+	float* Output_vy;
+	float* Output_vz;
+	float* Output_sx;
+	float* Output_sy;
+	float* Output_sz;
+
 	// Public functions
 	void Register();
+	void getOutput();
 	void setImages(float* fixed, float* moving, unsigned int ImgSize[3]);
 	void debugOn(bool a) { debug = a; }
+	
 
 protected:
 	// Initialization code is set protected as the CUDA version

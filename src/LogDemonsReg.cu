@@ -46,6 +46,10 @@ LogDemonsReg::~LogDemonsReg()
 		delete[] gz_x;
 		delete[] gz_y;
 		delete[] gz_z;
+		delete[] Output_Mp;
+		delete[] Output_sx;
+		delete[] Output_sy;
+		delete[] Output_sz;
 	
 	}
 }
@@ -118,6 +122,15 @@ void LogDemonsReg::initialize(){
 		gz_y = new float[len]();
 		gz_z = new float[len]();
 
+		// memory for output
+		Output_Mp = new float[src.srcDim[0] * src.srcDim[1] * src.srcDim[2]]();
+		Output_vx = new float[src.srcDim[0] * src.srcDim[1] * src.srcDim[2]]();
+		Output_vy = new float[src.srcDim[0] * src.srcDim[1] * src.srcDim[2]]();
+		Output_vz = new float[src.srcDim[0] * src.srcDim[1] * src.srcDim[2]]();
+		Output_sx = new float[src.srcDim[0] * src.srcDim[1] * src.srcDim[2]]();
+		Output_sy = new float[src.srcDim[0] * src.srcDim[1] * src.srcDim[2]]();
+		Output_sz = new float[src.srcDim[0] * src.srcDim[1] * src.srcDim[2]]();
+
 		if (debug) printf("CPU Memory allocated.\n");
 		padImage();
 		LogDemonsReg::gradient(fixed, uxf, uyf, uzf, normg2f);
@@ -126,7 +139,53 @@ void LogDemonsReg::initialize(){
 	}
 }
 
+void LogDemonsReg::getOutput() {
+	//unpad Mp vx vy vz sx sy sz
 
+	for (unsigned int k = 0; k < src.srcDim[2]; ++k) {
+		for (unsigned int j = 0; j < src.srcDim[1]; ++j) {
+
+			// copy fixed and moving image with padding on a row-by-row basis
+			memcpy(
+				(Output_Mp + k * (src.srcDim[0] * src.srcDim[1]) + j * src.srcDim[0]),
+				(deformedMoving + (marginSize[2] + k) * (dim[0] * dim[1]) + (marginSize[1] + j) * (dim[0]) + marginSize[0]),
+				src.srcDim[0] * sizeof(float)
+			);
+
+			memcpy(
+				(Output_vx + k * (src.srcDim[0] * src.srcDim[1]) + j * src.srcDim[0]),
+				(vx + (marginSize[2] + k) * (dim[0] * dim[1]) + (marginSize[1] + j) * (dim[0]) + marginSize[0]),
+				src.srcDim[0] * sizeof(float)
+			);
+			memcpy(
+				(Output_vy + k * (src.srcDim[0] * src.srcDim[1]) + j * src.srcDim[0]),
+				(vy + (marginSize[2] + k) * (dim[0] * dim[1]) + (marginSize[1] + j) * (dim[0]) + marginSize[0]),
+				src.srcDim[0] * sizeof(float)
+			);
+			memcpy(
+				(Output_vz + k * (src.srcDim[0] * src.srcDim[1]) + j * src.srcDim[0]),
+				(vz + (marginSize[2] + k) * (dim[0] * dim[1]) + (marginSize[1] + j) * (dim[0]) + marginSize[0]),
+				src.srcDim[0] * sizeof(float)
+			);
+			memcpy(
+				(Output_sx + k * (src.srcDim[0] * src.srcDim[1]) + j * src.srcDim[0]),
+				(sx + (marginSize[2] + k) * (dim[0] * dim[1]) + (marginSize[1] + j) * (dim[0]) + marginSize[0]),
+				src.srcDim[0] * sizeof(float)
+			);
+			memcpy(
+				(Output_sy + k * (src.srcDim[0] * src.srcDim[1]) + j * src.srcDim[0]),
+				(sy + (marginSize[2] + k) * (dim[0] * dim[1]) + (marginSize[1] + j) * (dim[0]) + marginSize[0]),
+				src.srcDim[0] * sizeof(float)
+			);
+			memcpy(
+				(Output_sz + k * (src.srcDim[0] * src.srcDim[1]) + j * src.srcDim[0]),
+				(sz + (marginSize[2] + k) * (dim[0] * dim[1]) + (marginSize[1] + j) * (dim[0]) + marginSize[0]),
+				src.srcDim[0] * sizeof(float)
+			);
+
+		}
+	}
+}
 
 void LogDemonsReg::padImage(){
 	//Pad images
@@ -166,50 +225,30 @@ void LogDemonsReg::Register()
 		this->findupdate();
 		cout << "findupdate" << endl;
 
-
-		//saveImage<float>(ux, dim, "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\register_results\\cpu_results\\iter1\\ux.bin");
-		//saveImage<float>(uy, dim, "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\register_results\\cpu_results\\iter1\\uy.bin");
-		//saveImage<float>(uz, dim, "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\register_results\\cpu_results\\iter1\\uz.bin");
-
 		/*	For a fluid-like regularization let u <- K(sigma_f) * u	*/
 		this->imgaussian(ux, uy, uz, opt.sigma_f);
 		cout << "imgaussian 0 " << endl;
 	
-		//saveImage<float>(ux, dim, "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\register_results\\cpu_results\\iter1\\uxg.bin");
-		//saveImage<float>(uy, dim, "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\register_results\\cpu_results\\iter1\\uyg.bin");
-		//saveImage<float>(uz, dim, "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\register_results\\cpu_results\\iter1\\uzg.bin");
 
 		/*	Let v <- v compose u	*/
 	
 		this->compose();
 		cout << "compose " << endl;
 
-		//saveImage<float>(vx, dim, "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\register_results\\cpu_results\\iter1\\vx.bin");
-		//saveImage<float>(vy, dim, "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\register_results\\cpu_results\\iter1\\vy.bin");
-		//saveImage<float>(vz, dim, "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\register_results\\cpu_results\\iter1\\vz.bin");
 
 
 		/*	For a diffusion like regularization let s <- K(sigma_d)*c (else, s<-c)	*/
 		this->imgaussian(vx, vy, vz, opt.sigma_d);
 		cout << "imgaussian 1 " << endl;
-		//saveImage<float>(vx, dim, "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\register_results\\cpu_results\\iter1\\vxg.bin");
-		//saveImage<float>(vy, dim, "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\register_results\\cpu_results\\iter1\\vyg.bin");
-		//saveImage<float>(vz, dim, "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\register_results\\cpu_results\\iter1\\vzg.bin");
-
 
 		/*	s = exp(v)	*/
 		this->expfield();	
 		cout << "expfield " << endl;
 
-		//saveImage<float>(sx, dim, "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\register_results\\cpu_results\\iter1\\sx.bin");
-		//saveImage<float>(sy, dim, "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\register_results\\cpu_results\\iter1\\sy.bin");
-		//saveImage<float>(sz, dim, "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\register_results\\cpu_results\\iter1\\sz.bin");
 
 		//Transform the moving image
 		this->iminterpolate(moving, sx, sy, sz, deformedMoving);
 		cout << "iminterpolate " << endl;
-
-		//saveImage<float>(deformedMoving, dim, "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\register_results\\cpu_results\\iter1\\Mp.bin");
 
 		//evulate energy
 		energy_vec.push_back(energy());
@@ -226,8 +265,6 @@ void LogDemonsReg::Register()
 				break;
 			}
 		}
-		std::string filename = "C:\\Users\\Martin\\Documents\\gpu_diffeomorphic_logdemons_private\\test_data\\register_results\\cpu_results\\Mp_" + to_string(iter+1) + std::string(".bin");
-		saveImage<float>(deformedMoving, dim, filename.c_str());
 	}
 
 	printf("LogDemonsReg Complete\n");	printf("\n"); printf("\n");

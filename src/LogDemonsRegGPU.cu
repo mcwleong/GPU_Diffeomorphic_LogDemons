@@ -221,7 +221,7 @@ void LogDemonsRegGPU::initialize(){
 void LogDemonsRegGPU::Register(){
 
 	LogDemonsRegGPU::initialize();
-
+	//std::cout << dim[0] << " " << dim[1] << " " << dim[2] << " " << std::endl;
 	for (int iter = 0; iter < opt.iteration_max; ++iter) {
 
 		/*	Given the current transformation s, compute a correspondence update field u
