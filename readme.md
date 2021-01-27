@@ -9,8 +9,7 @@ Installation steps to use the ITK wrapper:
 
 
 The work is linked to the following publication (to appear): 
-Performance-aware Programming for Intraoperative Intensity-based Image Registration on Graphics Processing Units
-Martin C.W. Leong, Kit-Hang Lee, Bowen P.Y. Kwan, Yui-Lun Ng, Zhiyu Liu, Nassir Navab, Wayne Luk, Ka-Wai Kwok
+Leong, M.C.W., Lee, KH., Kwan, B.P.Y. et al. Performance-aware programming for intraoperative intensity-based image registration on graphics processing units. Int J CARS (2021). https://doi.org/10.1007/s11548-020-02303-y
 
 If you have any question, please feel free to contact me at mcwleong@connect.hku.hk or mcwleong1993@gmail.com
 
