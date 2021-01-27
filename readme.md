@@ -8,7 +8,7 @@ Installation steps to use the ITK wrapper:
 5. 	Run 'CUDA_diffeomorphic_logdemons_3D_ITK' under the 'build' directory
 
 
-The work is linked to the following publication (to appear): 
+The work is linked to the following publication: 
 Leong, M.C.W., Lee, KH., Kwan, B.P.Y. et al. Performance-aware programming for intraoperative intensity-based image registration on graphics processing units. Int J CARS (2021). https://doi.org/10.1007/s11548-020-02303-y
 
 If you have any question, please feel free to contact me at mcwleong@connect.hku.hk or mcwleong1993@gmail.com
